@@ -549,3 +549,190 @@ def plot_cracking_moment_strain_profile(
     return fig, ax
 
 
+def plot_cracking_moment_strain_profile_claude(
+        section: GenericSection,
+        cracking_results: dict
+):
+    """
+    Black & white strain profile plot at cracking moment.
+    - Dashed background grid
+    - Thick top & bottom strain lines
+    - Dash-dot centroid line
+    - Reinforcement strains in RED (including prestress if present)
+    - Thick vertical extent line
+    - X-axis extended by ±0.15‰
+    - Y-axis padded by 5% of section depth
+    """
+
+    strain_profile = cracking_results["strain_profile"]
+
+    # Section extents
+    _, _, zmin, zmax = section.geometry.calculate_extents()
+    depth = zmax - zmin
+
+    # Section centroid
+    cz = section.gross_properties.cz
+
+    # Top & bottom fiber strains
+    eps_top = get_strain_at_point(strain_profile, 0, zmax)
+    eps_bot = get_strain_at_point(strain_profile, 0, zmin)
+
+    # Get reinforcement data
+    z_reinf = []
+    eps_ini_list = []
+
+    for pg in section.geometry.point_geometries:
+        z_reinf.append(pg.point.y)
+
+        # Get initial strain (prestress)
+        eps_ini = pg.material.initial_strain if hasattr(pg.material, 'initial_strain') else 0.0
+        if eps_ini is None:
+            eps_ini = 0.0
+        eps_ini_list.append(eps_ini)
+
+    # Reinforcement strains = bending strain + initial strain
+    eps_reinf_bending = [
+        get_strain_at_point(strain_profile, 0, z_s)
+        for z_s in z_reinf
+    ]
+
+    # Total strain for visualization (what the steel actually experiences)
+    eps_reinf_total = [
+        eps_bending + eps_ini
+        for eps_bending, eps_ini in zip(eps_reinf_bending, eps_ini_list)
+    ]
+
+    # --- X-axis strain limits (‰) with padding ------------------------
+    eps_vals = [0.0, eps_top * 1e3, eps_bot * 1e3] + [e * 1e3 for e in eps_reinf_total]
+    eps_min = min(eps_vals) - 0.15
+    eps_max = max(eps_vals) + 0.15
+
+    # --- Y-axis padding (5% of section depth) -------------------------
+    z_pad = 0.05 * depth
+
+    # ------------------------------------------------------------------
+    # Plot
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(6, 8))
+
+    # Thick vertical extent line (neutral axis)
+    ax.vlines(
+        x=0.0,
+        ymin=zmin,
+        ymax=zmax,
+        color="black",
+        linewidth=2,
+        label="Neutral Axis"
+    )
+
+    # Concrete strain profile (linear distribution)
+    ax.plot(
+        [eps_top * 1e3, eps_bot * 1e3],
+        [zmax, zmin],
+        color="black",
+        linewidth=2,
+        label="Concrete strain profile"
+    )
+
+    # Top & bottom strain lines (thick)
+    ax.hlines(
+        y=zmax,
+        xmin=min(0.0, eps_top * 1e3),
+        xmax=max(0.0, eps_top * 1e3),
+        color="black",
+        linewidth=2
+    )
+
+    ax.hlines(
+        y=zmin,
+        xmin=min(0.0, eps_bot * 1e3),
+        xmax=max(0.0, eps_bot * 1e3),
+        color="black",
+        linewidth=2
+    )
+
+    # Centroid line (dash-dot)
+    ax.hlines(
+        y=cz,
+        xmin=eps_min,
+        xmax=eps_max,
+        color="gray",
+        linewidth=1,
+        linestyle="-.",
+        label=f"Centroid (z={cz:.1f}mm)"
+    )
+
+    # Reinforcement strains (RED) - showing TOTAL strain
+    for i, (z_s, eps_total, eps_ini) in enumerate(zip(z_reinf, eps_reinf_total, eps_ini_list)):
+        # Draw line from neutral axis to total strain
+        ax.hlines(
+            y=z_s,
+            xmin=0.0,
+            xmax=eps_total * 1e3,
+            color="red",
+            linewidth=1.5,
+            label="Reinforcement" if i == 0 else None
+        )
+
+        # Add marker at the end
+        ax.plot(eps_total * 1e3, z_s, 'ro', markersize=6)
+
+        # Annotation with total strain
+        label_text = f"{eps_total * 1e3:+.3f}‰"
+        if abs(eps_ini) > 1e-6:  # If there's prestress, show it
+            label_text += f"\n(prestress: {eps_ini * 1e3:+.3f}‰)"
+
+        ax.annotate(
+            label_text,
+            (eps_total * 1e3, z_s),
+            textcoords="offset points",
+            xytext=(8, 0),
+            va="center",
+            color="red",
+            fontsize=8
+        )
+
+    # Top strain label (left)
+    ax.annotate(
+        f"{eps_top * 1e3:+.3f}‰",
+        (eps_top * 1e3, zmax),
+        textcoords="offset points",
+        xytext=(-8, 0),
+        ha="right",
+        va="center",
+        color="black",
+        fontsize=9
+    )
+
+    # Bottom strain label (right)
+    ax.annotate(
+        f"{eps_bot * 1e3:+.3f}‰",
+        (eps_bot * 1e3, zmin),
+        textcoords="offset points",
+        xytext=(8, 0),
+        va="center",
+        color="black",
+        fontsize=9
+    )
+
+    # Axes formatting
+    ax.axvline(0.0, color="black", linewidth=1)
+    ax.set_xlabel("Strain ε [‰]", fontsize=11)
+    ax.set_ylabel("z [mm]", fontsize=11)
+    ax.set_title("Strain Profile at Cracking Moment", fontsize=12, fontweight='bold')
+
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    ax.legend(loc='best', fontsize=9)
+
+    # Apply padded limits
+    ax.set_xlim(eps_min, eps_max)
+    ax.set_ylim(zmin - z_pad, zmax + z_pad)
+
+    # Add text box with key results
+    mcr_knm = cracking_results['m_cr'] / 1e6
+    textstr = f'M_cr = {mcr_knm:.2f} kNm'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=10,
+            verticalalignment='top', bbox=props)
+
+    return fig, ax
