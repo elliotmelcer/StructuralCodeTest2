@@ -1,12 +1,18 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.collections import PolyCollection
 from shapely.geometry.polygon import Polygon
 from structuralcodes.core._section_results import MomentCurvatureResults
+from structuralcodes.core.base import ConstitutiveLaw
 from structuralcodes.geometry import Geometry
 from structuralcodes.materials.concrete import Concrete
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 from tabulate import tabulate
+import typing as t
+
+from core.analysis_core.section_methods import get_strain_at_point
+
 
 # --- Moment-Curvature-Diagram ---
 
@@ -91,7 +97,7 @@ def plot_moment_curvature(m_c_res: MomentCurvatureResults, x = None, ax=None):
 def table_moment_curvature(m_c_res: MomentCurvatureResults):
         """
         Author: Elliot Melcer
-        Return a tabulated string of moment–curvature results.
+        Return a tabulated string of moment–curvature results_c1_1.
         """
         # Convert to numpy arrays for safety
         chi_y = np.asarray(m_c_res.chi_y)
@@ -133,7 +139,7 @@ def plot_constitutive_law_concrete(concrete: Concrete, n: int = 100):
     eps_min, _ = law.get_ultimate_strain()
     eps_0 = getattr(law, "_eps_0", -0.002)
 
-    eps = np.linspace(eps_min, 0.0, n)
+    eps = np.linspace(eps_min, 0.00, n)
     sig = law.get_stress(eps)
 
     # === FLIP OVER X AND Y AXIS ===
@@ -148,7 +154,6 @@ def plot_constitutive_law_concrete(concrete: Concrete, n: int = 100):
     ax.set_title(f"Constitutive Law of {concrete.name}")
     ax.grid(True, linestyle="--", alpha=0.5)
     ax.legend()
-    # plt.show()
 
 # --- Reinforcement ---
 
@@ -202,7 +207,6 @@ def plot_constitutive_law_reinforcement(reinforcement: Reinforcement, n: int = 1
     ax.grid(True, linestyle="--", alpha=0.55)
     ax.legend()
 
-    # plt.show()
 
 # --- Cross Section ---
 
@@ -254,7 +258,7 @@ def plot_cross_section(gs: GenericSection, ax=None, x=None, **kwargs):
     ax.text(0, L * 1.5, "z", va="bottom", ha="center", color="black", alpha = 0.4)
 
     # ---- 4. Final formatting ----
-    ax.set_title(f"Section at x = {x} * L" if x is not None else "Section")
+    ax.set_title(f"{gs.name} at x = {x} * L" if x is not None else f"{gs.name}")
     ax.set_aspect("equal")
 
     return ax
@@ -305,8 +309,6 @@ def _plot_geometry(geo: Geometry, ax=None, x = None, **kwargs):
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # if show:
-    #     plt.show()
     return ax
 
 def _plot_polygon(poly: Polygon, ax, edgecolor="black", facecolor="lightgrey", **kwargs):
@@ -322,3 +324,228 @@ def _plot_polygon(poly: Polygon, ax, edgecolor="black", facecolor="lightgrey", *
     for hole in poly.interiors:
         hx, hy = hole.xy
         ax.fill(hx, hy, facecolor="white", edgecolor=edgecolor, linestyle="--")
+
+
+def plot_triangulated_mesh(triangulated_data: t.List[t.Tuple[np.ndarray, np.ndarray, np.ndarray, ConstitutiveLaw]], show_centroids=True):
+    """
+    Visualize triangulated fibers returned by FiberIntegrator.triangulate().
+
+    Parameters
+    ----------
+    triangulated_data : list of tuples
+        (x, y, area, constitutive_law)
+    show_centroids : bool
+        If True, draw centroid dots.
+    """
+
+    fig, ax = plt.subplots()
+
+    # Map each material to a color index
+    materials = {}
+    cmap = plt.cm.get_cmap('tab10')
+    color_index = 0
+
+    for x, y, area, material in triangulated_data:
+
+        # each "set" (x,y,area) contains multiple fibers but they all
+        # come from one triangulated surface with one material
+        if material not in materials:
+            materials[material] = cmap(color_index)
+            color_index += 1
+
+        col = materials[material]
+
+        # draw small scatter markers for centroids
+        if show_centroids:
+            ax.scatter(x, y, s=10, color=col)
+
+    # legend by material name
+    legend_elements = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=c,
+                   markersize=8, label=str(m))
+        for m, c in materials.items()
+    ]
+    ax.legend(handles=legend_elements, title="Materials")
+
+    ax.set_aspect('equal', 'box')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Triangulated Fibers (centroids)")
+
+
+def plot_mesh_with_triangles(triangulated_data):
+    fig, ax = plt.subplots()
+
+    for (x, y, area, material, mesh) in triangulated_data:
+        verts = mesh['vertices']
+        tris = mesh['triangles']
+
+        # create polygon array for PolyCollection
+        polys = [verts[tri] for tri in tris]
+
+        pc = PolyCollection(polys,
+                            facecolors='none',
+                            edgecolors='k',
+                            linewidths=0.6)
+        ax.add_collection(pc)
+
+        # optional – show centroids
+        ax.scatter(x, y, s=5, color='red')
+
+    ax.set_aspect('equal', 'box')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Triangulated mesh")
+
+import matplotlib.pyplot as plt
+
+
+def plot_cracking_moment_strain_profile(
+    section: GenericSection,
+    cracking_results: dict
+):
+    """
+    Black & white strain profile plot at cracking moment.
+    - Dashed background grid
+    - Thick top & bottom strain lines
+    - Dash-dot centroid line
+    - Reinforcement strains in RED (no prestress)
+    - Thick vertical extent line
+    - X-axis extended by ±0.15‰
+    - Y-axis padded by 5% of section depth
+    """
+
+    strain_profile = cracking_results["strain_profile"]
+
+    # Section extents
+    _, _, zmin, zmax = section.geometry.calculate_extents()
+    depth = zmax - zmin
+
+    # Section centroid
+    cz = section.gross_properties.cz
+
+    # Top & bottom fiber strains
+    eps_top = get_strain_at_point(strain_profile, 0, zmax)
+    eps_bot = get_strain_at_point(strain_profile, 0, zmin)
+
+    # Reinforcement z-coordinates
+    z_reinf = [pg.point.y for pg in section.geometry.point_geometries]
+
+    # Reinforcement strains (from strain field, no prestress)
+    eps_reinf = [
+        get_strain_at_point(strain_profile, 0, z_s)
+        for z_s in z_reinf
+    ]
+
+    # --- X-axis strain limits (‰) with padding ------------------------
+    eps_vals = [0.0, eps_top * 1e3, eps_bot * 1e3]
+    eps_min = min(eps_vals) - 0.15
+    eps_max = max(eps_vals) + 0.15
+
+    # --- Y-axis padding (5% of section depth) -------------------------
+    z_pad = 0.05 * depth
+
+    # ------------------------------------------------------------------
+    # Plot
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(6, 8))
+
+    # Thick vertical extent line
+    ax.vlines(
+        x=0.0,
+        ymin=zmin,
+        ymax=zmax,
+        color="black",
+        linewidth=2
+    )
+
+    # Concrete strain profile
+    ax.plot(
+        [eps_top * 1e3, eps_bot * 1e3],
+        [zmax, zmin],
+        color="black",
+        linewidth=2
+    )
+
+    # Top & bottom strain lines (thick)
+    ax.hlines(
+        y=zmax,
+        xmin=min(0.0, eps_top * 1e3),
+        xmax=max(0.0, eps_top * 1e3),
+        color="black",
+        linewidth=2
+    )
+
+    ax.hlines(
+        y=zmin,
+        xmin=min(0.0, eps_bot * 1e3),
+        xmax=max(0.0, eps_bot * 1e3),
+        color="black",
+        linewidth=2
+    )
+
+    # Centroid line (dash-dot)
+    ax.hlines(
+        y=cz,
+        xmin=eps_min,
+        xmax=eps_max,
+        color="black",
+        linewidth=1,
+        linestyle="-."
+    )
+
+    # Reinforcement strains (RED)
+    for z_s, eps_s in zip(z_reinf, eps_reinf):
+        ax.hlines(
+            y=z_s,
+            xmin=0.0,
+            xmax=eps_s * 1e3,
+            color="red",
+            linewidth=1.5
+        )
+
+        ax.annotate(
+            f"{eps_s * 1e3:+.3f}‰",
+            (eps_s * 1e3, z_s),
+            textcoords="offset points",
+            xytext=(5, 0),
+            va="center",
+            color="red"
+        )
+
+    # Top strain label (left)
+    ax.annotate(
+        f"{eps_top * 1e3:+.3f}‰",
+        (eps_top * 1e3, zmax),
+        textcoords="offset points",
+        xytext=(-5, 0),
+        ha="right",
+        va="center",
+        color="black"
+    )
+
+    # Bottom strain label (right)
+    ax.annotate(
+        f"{eps_bot * 1e3:+.3f}‰",
+        (eps_bot * 1e3, zmin),
+        textcoords="offset points",
+        xytext=(5, 0),
+        va="center",
+        color="black"
+    )
+
+    # Axes formatting
+    ax.axvline(0.0, color="black", linewidth=1)
+    ax.set_xlabel("Strain ε [‰]")
+    ax.set_ylabel("z [mm]")
+    ax.set_title("Strain Profile at Cracking Moment")
+
+    ax.grid(True, linestyle="--", linewidth=0.5)
+
+    # Apply padded limits
+    ax.set_xlim(eps_min, eps_max)
+    ax.set_ylim(zmin - z_pad, zmax + z_pad)
+
+    return fig, ax
+
+

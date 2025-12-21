@@ -24,7 +24,7 @@ class HPShell:
         dy : float
             Distance of the outermost tendon to the edge of the shell in mm
         nt: int
-            Number of tendons per tendon group
+            Number of tendons per tendon group, total number of tendons: 2 * nt
         """
         self.B = float(B)
         self.L = float(L)
@@ -93,9 +93,10 @@ class HPShell:
         if self.nt == 1:
            dy_real = self.B / 2 + ((-self.L / 2) / self.x_p() + 2 * alpha_nt_1 - 1) * self.y_p()
            self.dy = dy_real
+           print("dy_real=", dy_real)
            return dy_real
         else:
-            return self.dy
+           return self.dy
 
     def alpha_edge(self):
         """
@@ -319,7 +320,7 @@ class HPShell:
         return Polygon(poly_points)
 
 
-#    def generic_reinforcement(self, x: float, nt: int = 5) -> list[tuple[float, float]]:
+#    def reinforcement_B500(self, x: float, nt: int = 5) -> list[tuple[float, float]]:
         """
         Author: Elliot Melcer
         Returns a list of (y, z) points for a generic reinforcement layout of 5 bars along the shell
