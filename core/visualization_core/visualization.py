@@ -139,7 +139,7 @@ def plot_constitutive_law_concrete(concrete: Concrete, n: int = 100):
     eps_min, _ = law.get_ultimate_strain()
     eps_0 = getattr(law, "_eps_0", -0.002)
 
-    eps = np.linspace(eps_min, 0.00, n)
+    eps = np.linspace(eps_min, -eps_min, n)
     sig = law.get_stress(eps)
 
     # === FLIP OVER X AND Y AXIS ===

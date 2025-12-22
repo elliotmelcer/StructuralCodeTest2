@@ -3,7 +3,8 @@ from matplotlib import pyplot as plt
 from core.analysis_core import section_methods
 from _mains.testing_files.testing_hp_sections import hp_section_c1_1_sls, hp_section_c1_2_c50_sls, \
     hp_section_c1_2_c80_sls, hp_section_c1_3_sls, hp_section_c1_4_sls
-from core.visualization_core.visualization import plot_cracking_moment_strain_profile
+from core.analysis_core.section_methods import get_concrete
+from core.visualization_core.visualization import plot_cracking_moment_strain_profile, plot_constitutive_law_concrete
 
 """
 This file is used for verification of the cracking moment method. 
@@ -36,7 +37,7 @@ print(f"Cracking Moment Verification\n"
 # #   - Constitutive Laws:
 #
 # plot_constitutive_law_concrete(get_concrete(hp_section_c1_1_uls))
-# plot_constitutive_law_concrete(get_concrete(hp_section_c1_1_sls))
+plot_constitutive_law_concrete(get_concrete(hp_section_c1_1_sls))
 # plot_constitutive_law_reinforcement(get_reinforcement(hp_section_c1_1_sls)[0])
 #
 # #   - Section Strain Profile

@@ -1,6 +1,7 @@
 import numpy as np
 from structuralcodes.geometry import  CompoundGeometry, SurfaceGeometry
 from structuralcodes.materials.concrete import Concrete, create_concrete
+from structuralcodes.materials.constitutive_laws import Sargin, UserDefined
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 
@@ -725,8 +726,9 @@ def sls_section(section_uls: GenericSection) -> GenericSection:
     geo = section_uls.geometry
 
     #create sls concrete from concrete used in section
-    f_ck = get_concrete(section_uls).fck
-    concrete_sls = create_concrete(fck=f_ck, constitutive_law='elastic', name = f"C{f_ck} SLS")
+    conc = get_concrete(section_uls)
+    f_ck = conc.fck
+    concrete_sls = create_concrete(fck=f_ck, constitutive_law=sargin_elastic_law(conc), name = f"C{f_ck} SLS")
 
     processed_geoms = []
     for g in geo.geometries:
@@ -792,3 +794,63 @@ def get_number_of_reinforcements(section: GenericSection) -> int:
     geom = section.geometry
     n = len(geom.point_geometries)
     return n
+
+def sargin_elastic_law(concrete: Concrete, n_c: int = 80, n_t: int = 20) -> UserDefined:
+    """
+    EC2 concrete:
+    - Compression: Sargin (eps_cu1 → eps_c1)
+    - Tension: linear elastic (0 → eps_ctm)
+    """
+
+    # -------------------------------
+    # Read parameters
+    # -------------------------------
+    fcm = concrete.fcm
+    Ecm = concrete.Ecm
+    fctm = concrete.fctm
+
+    eps_c1 = -abs(concrete.eps_c1)
+    eps_cu1 = -abs(concrete.eps_cu1)
+    k = concrete.k_sargin
+
+    eps_ctm = fctm / Ecm
+
+    # -------------------------------
+    # Sargin compression
+    # -------------------------------
+    sargin = Sargin(
+        fc=fcm,
+        eps_c1=eps_c1,
+        eps_cu1=eps_cu1,
+        k=k,
+    )
+
+    # ⚠ exclude zero explicitly
+    eps_c = np.linspace(eps_cu1, 0.00, n_c, endpoint=True)
+    eps_c = eps_c[eps_c < 0.0]
+    sig_c = sargin.get_stress(eps_c)
+
+    # -------------------------------
+    # Elastic tension
+    # -------------------------------
+    eps_t = np.linspace(0.0, eps_ctm, n_t, endpoint=True)
+    sig_t = Ecm * eps_t
+
+    # -------------------------------
+    # Merge safely
+    # -------------------------------
+    eps = np.concatenate((eps_c, eps_t))
+    sig = np.concatenate((sig_c, sig_t))
+
+    # -------------------------------
+    # Final safety check (important)
+    # -------------------------------
+    eps, unique_idx = np.unique(eps, return_index=True)
+    sig = sig[unique_idx]
+
+    return UserDefined(
+        x=eps,
+        y=sig,
+        name="SarginElastic",
+        flag=0,
+    )
