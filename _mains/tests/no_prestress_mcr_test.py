@@ -5,7 +5,7 @@ from structuralcodes.sections import GenericSection
 from core.analysis_core import section_methods
 from _mains.testing_files.testing_hp_sections import hp_section_c1_3_sls
 from core.analysis_core.section_methods import get_concrete
-from core.visualization_core.visualization import plot_cracking_moment_strain_profile
+from core.visualization_core.visualization import plot_strain_profile
 
 """
 This file is used for verification of the cracking moment method. 
@@ -15,7 +15,7 @@ The sections used for verification are from chapter "C.1. Vergleich der Riss- un
 
 # Section 1:
 
-results_c1_3        = section_methods.calculate_cracking_moment_sls_prestressed_claude(hp_section_c1_3_sls, n=0)
+results_c1_3        = section_methods.calculate_cracking_moment_sls(hp_section_c1_3_sls, n=0)
 
 
 print(f"Cracking Moment Verification\n"
@@ -26,6 +26,6 @@ print(f"Cracking Moment Verification\n"
 
 
 # #   - Section Strain Profile
-plot_cracking_moment_strain_profile(hp_section_c1_3_sls, results_c1_3)
+plot_strain_profile(hp_section_c1_3_sls, results_c1_3)
 plt.show()
 

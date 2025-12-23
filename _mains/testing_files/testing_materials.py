@@ -17,16 +17,16 @@ set_design_code('ec2_2004')
 
 # - Definitions -
 concrete_c40_uls = create_concrete(fck=40, constitutive_law ='parabolarectangle', alpha_cc = 0.85, gamma_c = 1.5, name ="C40/50 ULS")
-concrete_c40_sls = create_concrete(fck=40, constitutive_law ='sargin', name ="C40/50 SLS")
+# concrete_c40_sls = create_concrete(fck=40, constitutive_law ='sargin', name ="C40/50 SLS")
 
 concrete_c50_uls = create_concrete(fck=50, constitutive_law ='parabolarectangle', alpha_cc = 0.85, gamma_c = 1.5, name ="C50/60 ULS")
-concrete_c50_sls = create_concrete(fck=50, constitutive_law ='sargin', name ="C50/60 SLS")
+# concrete_c50_sls = create_concrete(fck=50, constitutive_law ='sargin', name ="C50/60 SLS")
 
 concrete_c55_uls = create_concrete(fck=55, constitutive_law ='parabolarectangle', alpha_cc = 0.85, gamma_c = 1.5, name ="C55/67 ULS")
-concrete_c55_sls = create_concrete(fck=55, constitutive_law ='sargin', name ="C55/67 SLS")
+# concrete_c55_sls = create_concrete(fck=55, constitutive_law ='sargin', name ="C55/67 SLS")
 
 concrete_c80_uls = create_concrete(fck=80, constitutive_law ='parabolarectangle', alpha_cc = 0.85, gamma_c = 1.5, name ="C80/95 ULS")
-concrete_c80_sls = create_concrete(fck=80, constitutive_law ='sargin', name ="C80/95 SLS")
+# concrete_c80_sls = create_concrete(fck=80, constitutive_law ='sargin', name ="C80/95 SLS")
 
 
 

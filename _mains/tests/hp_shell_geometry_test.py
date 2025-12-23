@@ -45,7 +45,7 @@ hp_section_sls = sls_section(hp_section)
 
 moment_curvature = hp_section.section_calculator.calculate_moment_curvature()
 
-print("Mcr (SLS) = ",section_methods.calculate_cracking_moment_sls_restressed(hp_section_sls, n=0)/1000000, " kNm\n")
+print("Mcr (SLS) = ",section_methods.calculate_cracking_moment_sls_prestressed(hp_section_sls, n=0)/1000000, " kNm\n")
 
 # print(section_methods.calculate_cracking_moment(hp_section, n=0))
 # print(section_methods.calculate_cracking_moment_manual(hp_section))

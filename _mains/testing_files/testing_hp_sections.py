@@ -77,19 +77,17 @@ hp_section_c1_2_c80_uls = make_section(hp_c1_2, concrete_c80_uls, solidian_Q95_p
 hp_section_c1_3_uls     = make_section(hp_c1_3, concrete_c50_uls, solidian_Q142       , reinf_area = 300, _x = x * hp_c1_3.L, name = "C.1. Section 3")
 hp_section_c1_4_uls     = make_section(hp_c1_4, concrete_c55_uls, solidian_Q142_pre_50, reinf_area = 80,  _x = x * hp_c1_4.L, name = "C.1. Section 4")
 
-# SLS Sections
-hp_section_c1_1_sls     = sls_section(hp_section_c1_1_uls)
-hp_section_c1_2_c50_sls = sls_section(hp_section_c1_2_c50_uls)
-hp_section_c1_2_c80_sls = sls_section(hp_section_c1_2_c80_uls)
-hp_section_c1_3_sls     = sls_section(hp_section_c1_3_uls)
-hp_section_c1_4_sls     = sls_section(hp_section_c1_4_uls)
-
 
 # --- HP Shell for Verification of Moment-Curvature-Diagram ---
 hp_c2 = HPShell(B = 1200, L = 6750, Hx = 70, Hy = 280, t = 40, dy = 30, nt = 5)
 
-hp_section_c2 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = x * hp_c2.L, name = "C.2. Section")
-
+# ULS Sections
+hp_section_c2_uls_x_0_00 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.00 * hp_c2.L, name = "C.2. Section at 0.00 * L")
+hp_section_c2_uls_x_0_10 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.10 * hp_c2.L, name = "C.2. Section at 0.10 * L")
+hp_section_c2_uls_x_0_20 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.20 * hp_c2.L, name = "C.2. Section at 0.20 * L")
+hp_section_c2_uls_x_0_30 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.30 * hp_c2.L, name = "C.2. Section at 0.30 * L")
+hp_section_c2_uls_x_0_40 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.40 * hp_c2.L, name = "C.2. Section at 0.40 * L")
+hp_section_c2_uls_x_0_50 = make_section(hp_c2, concrete_c50_uls, solidian_Q142_pre_60, reinf_area = 10,  _x = 0.50 * hp_c2.L, name = "C.2. Section at 0.50 * L")
 
 
 if __name__ == "__main__":
@@ -99,7 +97,7 @@ if __name__ == "__main__":
     plot_cross_section(hp_section_c1_3_uls)
     plot_cross_section(hp_section_c1_4_uls)
 
-    plot_cross_section(hp_section_c2)
+    plot_cross_section(hp_section_c2_uls_x_0_00)
 
     plt.show()
 
