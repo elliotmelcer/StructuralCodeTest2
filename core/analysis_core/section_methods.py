@@ -8,71 +8,6 @@ from structuralcodes.materials.constitutive_laws import Sargin, UserDefined
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 
-'''
-def calculate_cracking_moment(section: GenericSection, n: float) -> float:
-    """
-    Author: Elliot Melcer
-    Global function computing cracking moment of a GenericSection
-    under axial force n.
-    """
-    # --- Material Properties ---
-    conc = get_concrete(section)
-
-    # Secant Modulus of Concrete at eps = 0
-    E = conc.constitutive_law.get_secant(0)
-    Ecm = conc.Ecm
-    print("E-Secant (ULS) = ", E, " N/mm^2")
-    print("Ecm (ULS) = ", Ecm, " N/mm^2")
-
-    # Tensile Strength
-    conc = get_concrete(section)
-    fctm = conc.fctm
-
-
-    # --- Geometric Properties ---
-    gross_props = section.gross_properties
-
-    cz = gross_props.cz
-    e_iyy_c = gross_props.e_iyy_c
-    ea = gross_props.ea
-
-    iyy_hom = e_iyy_c / E
-
-    _, _, zmin, _ = section.geometry.calculate_extents()
-    z_t = zmin - cz        # centroid to bottom fibre
-    wy = iyy_hom / z_t         # section modulus
-
-
-    # Count reinforcement bars
-    n_reinf = get_number_of_reinforcements(section)
-
-    # reinforcement, area = get_reinforcement(section)
-    # eps_ini = reinforcement.initial_strain
-    # if eps_ini is None:
-    #     eps_ini = 0.0
-    # E_s = reinforcement.Es
-    # a_s = area
-
-    # --- Calculations ---
-    # p = eps_ini * E_s * a_s
-
-    # m_cr = wy * (fctm - n_reinf * p / a)
-    m_cr = wy * fctm
-
-    # --- Print ---
-    print(f"Method: calculate_cracking_moment \n"
-          f"Calculation: f_ctm={fctm:.2f} MPa, "
-          f"EA={ea:.3e} N, "
-          f"EI_yy_c={e_iyy_c:.2e} Nmm^2, "
-          f"I_yy_hom={iyy_hom:.2e} mm^4, "
-          f"cz={cz:.2e} mm, "
-          f"distance centroid to bottom fiber={z_t:.2e} mm, "
-          f"W_y={wy:.2e} mm³, "
-          f"M_cr={m_cr:.2e} Nmm")
-
-    return m_cr
-'''
-
 def calculate_cracking_moment_sls(section: GenericSection, n: float = 0.0) -> dict:
     """
     Author: Elliot Melcer
@@ -280,6 +215,7 @@ def calculate_cracking_moment_sls(section: GenericSection, n: float = 0.0) -> di
 
 def calculate_bending_strength_sls(section: GenericSection, n: float = 0.0) -> dict:
     """
+    Author: Elliot Melcer
     Returns a triplet of:
         SLS Section
         SLS Bending Strength
@@ -304,6 +240,7 @@ def calculate_bending_strength_sls(section: GenericSection, n: float = 0.0) -> d
 
 def calculate_bending_strength_uls(section: GenericSection, n: float = 0.0) -> dict:
     """
+    Author: Elliot Melcer
     Returns a triplet of:
         ULS Section
         ULS Bending Strength
@@ -327,7 +264,10 @@ def calculate_bending_strength_uls(section: GenericSection, n: float = 0.0) -> d
     return section.section_calculator.calculate_bending_strength().m_y
 
 def calculate_moment_curvature_sls(section: GenericSection, n: float = 0.0) -> MomentCurvatureResults:
-
+    """
+    Author: Elliot Melcer
+    Returns the Results of a Moment-Curvature calculation for the given section
+    """
     sls_sec = sls_section(section, concrete_tension=False)
 
     results = sls_sec.section_calculator.calculate_moment_curvature(n = n, num_pre_yield=40, num_post_yield=0)

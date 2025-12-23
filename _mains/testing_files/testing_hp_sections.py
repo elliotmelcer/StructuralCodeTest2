@@ -13,6 +13,19 @@ from _mains.testing_files.testing_materials import concrete_c50_uls, solidian_Q1
     concrete_c80_uls, solidian_Q142, solidian_Q95_pre_50, solidian_Q95_pre_20, solidian_Q142_pre_60, concrete_c55_uls
 
 
+
+
+"""
+Author: Elliot Melcer
+
+HP-Shells for Testing. Naming convention after:
+
+    Jamila Loutfi (2023):   "Entwicklung eines parametrischen Bemessungsmodells 
+                            für ein Deckensystem aus vorgespannten doppelt-gekrümmten 
+                            Schalen aus Carbonbeton"
+                            
+"""
+
 def make_section(hp: HPShell, conc: Concrete, reinforcement: Reinforcement, reinf_area: float, _x: float, name: Optional[str] = None) -> GenericSection:
     """
     Author: Elliot Melcer
@@ -47,16 +60,6 @@ def make_section(hp: HPShell, conc: Concrete, reinforcement: Reinforcement, rein
 
     return hp_section
 
-"""
-Author: Elliot Melcer
-
-HP-Shells for Testing. Naming convention after:
-
-    Jamila Loutfi (2023):   "Entwicklung eines parametrischen Bemessungsmodells 
-                            für ein Deckensystem aus vorgespannten doppelt-gekrümmten 
-                            Schalen aus Carbonbeton"
-                            
-"""
 
 # --- HP Shells for Verification of Cracking and Ultimate Moments---
 

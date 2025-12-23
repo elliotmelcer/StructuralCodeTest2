@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from numpy import sqrt
 from shapely import Polygon, LineString
@@ -375,3 +376,30 @@ class HPShell:
         return ax
 
 
+def Volumen(self):
+    """
+    Übernommen von Pauls Skript "volumen.gh"
+    """
+    y1 = self.B / 2
+    y2 = -self.B / 2
+
+    b1 = (8 * self.Hy * y1 * np.sqrt(64 * self.Hy ** 2 * y1 * y1 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
+        8 * self.Hy * y1 / (self.B ** 2))) / (16 * self.Hy)
+    b2 = (8 * self.Hy * y2 * np.sqrt(64 * self.Hy ** 2 * y2 ** 2 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
+        8 * self.Hy * y2 / (self.B ** 2))) / (16 * self.Hy)
+
+    b = b1 - b2
+
+    x1 = self.L / 2
+    x2 = -self.L / 2
+
+    l1 = (8 * self.Hx * x1 * np.sqrt(64 * self.Hx ** 2 * x1 * x1 / (self.L ** 4) + 1) + self.L **2 * np.asinh(
+        8 * self.Hx * x1 / (self.L ** 2))) / (16 * self.Hx)
+    l2 = (8 * self.Hx * x2 * np.sqrt(64 * self.Hx ** 2 * x2 * x2 / (self.L ** 4) + 1) + self.L ** 2 * np.asinh(
+        8 * self.Hx * x2 / (self.L ** 2))) / (16 * self.Hx)
+
+    l = l1 - l2
+
+    volumen = l * b * self.t
+    # volumen = 1
+    return volumen
