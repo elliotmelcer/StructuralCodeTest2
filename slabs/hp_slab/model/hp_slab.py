@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Optional
 
 import numpy as np
@@ -9,9 +10,25 @@ from structuralcodes.materials.concrete import Concrete
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 
+from core.unit_core import mm2_to_m2, mm3_to_m3
+from slabs.one_way_slab import OneWaySlab
 
-class HPSlab:
-    def __init__(self, B: float, L: float, Hx: float, Hy: float, t: float, dy: float, nt: int):
+
+class HPSlab(OneWaySlab):
+    def __init__(
+            self,
+            B: float,
+            L: float,
+            Hx: float,
+            Hy: float,
+            t: float,
+            dy: float,
+            nt: int,
+            concrete: Concrete,
+            reinforcement: Reinforcement,
+            reinf_area: float,
+            name: Optional[str] = None
+    ):
         """
         Author: Elliot Melcer
         Represents a hyperbolic paraboloid (hp) slab.
@@ -33,15 +50,23 @@ class HPSlab:
         nt: int
             Number of tendons per tendon group, total number of tendons: 2 * nt
         """
+        self.name = name
         self.B = float(B)
-        self.L = float(L)
+        self._L = float(L)
         self.Hx = float(Hx)
         self.Hy = float(Hy)
         self.t = float(t)
         self.dy = float(dy)
         self.nt = nt
+        self.concrete = concrete
+        self.reinforcement = reinforcement
+        self.reinf_area = reinf_area
         self.volume = self.volume()
         self.minimum_infill_volume = self.minimum_infill_volume()
+
+    @property
+    def L(self) -> float:
+        return self._L
 
     def _a(self):
         """
@@ -371,8 +396,7 @@ class HPSlab:
 
         return min_infill_volume
 
-    def section_at(self, _x: float, conc: Concrete, reinforcement: Reinforcement, reinf_area: float,
-                     name: Optional[str] = None) -> GenericSection:
+    def section_at(self, _x: float) -> GenericSection:
         """
         Author: Elliot Melcer
         Returns the section from a hp-shell at _x * L with given material properties and reinforcement area
@@ -381,14 +405,20 @@ class HPSlab:
             Reinforcement Area in mm²
             _x ∈ [-0.5 ; 0.5] with 0.00 at middle of span
         """
+        # --- Input validation ---
+        if not -0.5 <= _x <= 0.5:
+            raise ValueError(
+                f"_x must be between -0.5 and 0.5 (inclusive). Received {_x}."
+            )
+
         # Concrete Geometry
         hp_geometry = SurfaceGeometry(
-            poly=self.polygon_section_at(x=_x, n=100), material=conc
+            poly=self.polygon_section_at(x=_x, n=100), material=self.concrete
         )
 
         # Reinforcement Geometry
         reinforcement_points = self.tendon_coords_at_x(x=_x)
-        d = np.sqrt(4 * reinf_area / np.pi)
+        d = np.sqrt(4 * self.reinf_area / np.pi)
 
         # Add Reinforcement to Concrete Geometry
         for pt in reinforcement_points:
@@ -396,13 +426,35 @@ class HPSlab:
                 hp_geometry,
                 pt,  # reinforcement points
                 d,  # diameter [mm]
-                reinforcement  # reinforcement material
+                self.reinforcement  # reinforcement material
             )
 
-        if name is None:
+        if self.name is None:
             hp_section = GenericSection(hp_geometry)
         else:
-            hp_section = GenericSection(hp_geometry, name=name)
+            hp_section = GenericSection(hp_geometry, name=self.name)
 
         return hp_section
+
+    def self_load(self) -> float:
+        """
+        Author: Elliot Melcer
+        Returns the self-weight load of the concrete shell in [kN/m2] (self-weight of CRFP-reinforcement is negligible)
+        """
+        concrete_volume_m3 = mm3_to_m3(self.volume())           # [m³]
+        gamma_c = self.concrete.density * 10 / 1000             # [kN/m³]
+        net_area = mm2_to_m2(self.B * self.L)                   # [m²]
+
+        return concrete_volume_m3 * gamma_c / net_area          # [kN/m2]
+
+    def infill_load(self) -> float:
+        """
+        Author: Elliot Melcer
+        Returns the load due to minimum infill on the slab in [kN/m2]
+        """
+        infill_volume_m3 = mm3_to_m3(self.minimum_infill_volume())  # [m³]
+        gamma_c = self.concrete.density * 10 / 1000                 # [kN/m³]
+        net_area = mm2_to_m2(self.B * self.L)                       # [m²]
+
+        return infill_volume_m3 * gamma_c / net_area                # [kN/m2]
 
