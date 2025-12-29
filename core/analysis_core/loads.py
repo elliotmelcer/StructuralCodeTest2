@@ -3,6 +3,7 @@ import numpy as np
 class Loads:
 
     """
+    Author: Elliot Melcer
     Class for instantiating a load model according to Eurocode 0
     """
 
@@ -23,6 +24,10 @@ class Loads:
         self._check_dimensions()
 
     def _check_dimensions(self):
+        """
+        checks the dimension compatibility of the input
+        :return:
+        """
         n = len(self.load_values)
         for arr in [
             self.gamma_values,
@@ -35,7 +40,7 @@ class Loads:
 
     def fundamental_combination(self):
         """
-        Ultimate Limit State (ULS)
+        Ultimate Limit State (ULS) - fundamental combination
         EC0 6.10
         """
         return np.sum(
@@ -51,7 +56,7 @@ class Loads:
             self.load_values * self.psi_1_values
         )
 
-    def permanent_combination(self):
+    def quasi_permanent_combination(self):
         """
         Serviceability Limit State (SLS) – quasi-permanent combination
         EC0 6.16b

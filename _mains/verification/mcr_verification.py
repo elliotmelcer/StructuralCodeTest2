@@ -11,6 +11,17 @@ from core.visualization_core.visualization import plot_strain_profile, plot_cons
 This file is used for verification of the cracking moment method. 
 
 The sections used for verification are from chapter "C.1. Vergleich der Riss- und Bruchmomente" in Loutfi (2023)
+
+passed 29.12.2025
+
+Output:
+
+Section     Mcr [kNm]
+1               37.53
+2 (C50/60)     185.10
+2 (C80/90)     192.82
+3               46.34
+4              409.73
 """
 
 # Section 1:

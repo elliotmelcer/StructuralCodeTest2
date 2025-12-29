@@ -6,7 +6,7 @@ from core.analysis_core import section_methods
 from core.analysis_core.section_methods import sls_section, get_concrete
 from core.visualization_core.visualization import plot_moment_curvature, plot_constitutive_law_concrete, \
     plot_constitutive_law_reinforcement, table_moment_curvature, plot_cross_section
-from slabs.hp_shell.model.hp_shell import HPShell
+from slabs.hp_slab.model.hp_slab import HPSlab
 from _mains.testing_files.testing_materials import solidian_Q142_pre_50, concrete_c50_uls
 
 # hp_geometry stuff
@@ -18,15 +18,15 @@ t   = 40        #mm
 dy = 30         #mm
 nt = 5          #-
 
-x = 0.0 * l
+x = 0.0 # * l
 
-hp = HPShell(B = b, L = l, Hx = hx, Hy = hy, t = t, dy = dy, nt = nt)
+hp = HPSlab(B = b, L = l, Hx = hx, Hy = hy, t = t, dy = dy, nt = nt)
 
 # structural codes stuff
 
 # --- concrete section ---
 hp_geometry = SurfaceGeometry(
-    poly=hp.polygon_section(x = x, n = 100), material=concrete_c50_uls
+    poly=hp.polygon_section_at(x = x, n = 100), material=concrete_c50_uls
 )
 
 # --- reinforcement ---

@@ -7,7 +7,7 @@ from core.analysis_core import section_methods
 from core.visualization_core.visualization import plot_moment_curvature, plot_constitutive_law_concrete, \
     plot_constitutive_law_reinforcement, table_moment_curvature, plot_cross_section, plot_triangulated_mesh, \
     plot_mesh_with_triangles
-from slabs.hp_shell.model.hp_shell import HPShell
+from slabs.hp_slab.model.hp_slab import HPSlab
 from testing_generics import generic_cfrp_pre, generic_concrete_c50_uls, \
     generic_cfrp, generic_reinforcement, generic_concrete_c40_uls
 

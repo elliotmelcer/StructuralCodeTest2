@@ -12,6 +12,19 @@ from core.visualization_core.visualization import plot_constitutive_law_concrete
 This file is used for verification of the cracking moment method. 
 
 The sections used for verification are from chapter "C.1. Vergleich der Riss- und Bruchmomente" in Loutfi (2023)
+
+
+passed 29.12.2025
+
+Output:
+
+Section     Mu [kNm]
+1               80.91
+2 (C50/60)     309.79
+2 (C80/90)     337.88
+3              374.34
+4              722.60
+
 """
 
 results_c1_1        = calculate_bending_strength_sls(hp_section_c1_1_uls, n= 0)

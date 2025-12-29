@@ -7,17 +7,19 @@ from matplotlib import pyplot as plt
 from structuralcodes.geometry import SurfaceGeometry, add_reinforcement
 from structuralcodes.sections import GenericSection
 
+from _mains.testing_files.testing_materials import concrete_c50_uls, solidian_Q142_pre_60
 from core.visualization_core.visualization import (
     plot_constitutive_law_concrete,
     plot_constitutive_law_reinforcement,
-    table_moment_curvature,
     plot_cross_section
 )
+
+from slabs.hp_slab.model.hp_slab import HPSlab
 
 # Import improved M-K plot for CFRP
 import numpy as np
 
-def plot_moment_curvature_cfrp(m_c_res, x=None, ax=None):
+def plot_moment_curvature_cfrp(m_c_res, _x=None, ax=None):
     """Quick version of improved CFRP M-K plot"""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -38,7 +40,7 @@ def plot_moment_curvature_cfrp(m_c_res, x=None, ax=None):
 
     ax.set_xlabel("Curvature κ [1/km]", fontsize=12)
     ax.set_ylabel("Moment M [kNm]", fontsize=12)
-    ax.set_title(f"M-κ Diagram at x={x:.2f}L" if x else "M-κ Diagram",
+    ax.set_title(f"M-κ Diagram at x={_x:.2f}L" if _x else "M-κ Diagram",
                  fontsize=14, fontweight='bold')
     ax.grid(True, linestyle='--', alpha=0.7)
     ax.legend()
@@ -46,8 +48,7 @@ def plot_moment_curvature_cfrp(m_c_res, x=None, ax=None):
     return ax
 
 
-from slabs.hp_shell.model.hp_shell import HPShell
-from testing_generics import generic_cfrp_pre, generic_concrete_c50, generic_cfrp
+
 
 
 def calculate_cracking_moment_manual(section):
@@ -121,7 +122,7 @@ dy = 30       # mm - tendon edge distance
 nt = 5        # - number of tendons per group
 
 # Analysis position
-x = 0.5 * l  # midspan
+x = 0.0  # * l
 
 # ============================================================
 # CREATE HP SHELL
@@ -138,7 +139,7 @@ print(f"  Thickness = {t} mm")
 print(f"  Number of tendons = {2*nt}")
 print(f"  Analysis at x = {x} mm = {x/l:.1f}L")
 
-hp = HPShell(B=b, L=l, Hx=hx, Hy=hy, t=t, dy=dy, nt=nt)
+hp = HPSlab(B=b, L=l, Hx=hx, Hy=hy, t=t, dy=dy, nt=nt)
 
 # ============================================================
 # CREATE SECTION GEOMETRY
@@ -147,8 +148,8 @@ print("\nCreating section geometry...")
 
 # Concrete section
 hp_geometry = SurfaceGeometry(
-    poly=hp.polygon_section(x=x, n=100),
-    material=generic_concrete_c50
+    poly=hp.polygon_section_at(x=x, n=100),
+    material=concrete_c50_uls
 )
 
 # Add reinforcement (CFRP tendons)
@@ -160,7 +161,7 @@ for pt in reinforcement_points:
         hp_geometry,
         pt,
         diameter,
-        generic_cfrp_pre
+        solidian_Q142_pre_60
     )
 
 print(f"  Added {len(reinforcement_points)} CFRP tendons (Ø{diameter:.2f} mm)")
@@ -202,8 +203,8 @@ print(f"\nUltimate capacity:")
 print(f"  M_u = {M_u/1e6:.2f} kNm")
 print(f"  K_u = {K_u*1e6:.3e} [1/1000m]")
 
-# Yielding moment - NOT APPLICABLE FOR CFRP
-# CFRP is brittle and doesn't yield like steel
+# Yielding moment - NOT APPLICABLE FOR CRFP
+# CRFP is brittle and doesn't yield like steel
 if len(moment_curvature.m_y) >= 20:
     print(f"\nNote: CFRP reinforcement is brittle (no yielding)")
     print(f"      Failure occurs at ultimate capacity without ductile behavior")
@@ -216,9 +217,9 @@ print("\nGenerating plots...")
 # 1. Constitutive laws
 fig1 = plt.figure(figsize=(12, 5))
 plt.subplot(1, 2, 1)
-plot_constitutive_law_concrete(generic_concrete_c50)
+plot_constitutive_law_concrete(concrete_c50_uls)
 plt.subplot(1, 2, 2)
-plot_constitutive_law_reinforcement(generic_cfrp_pre)
+plot_constitutive_law_reinforcement(solidian_Q142_pre_60)
 plt.tight_layout()
 
 # 2. Cross-section

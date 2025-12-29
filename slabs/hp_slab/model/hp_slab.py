@@ -1,14 +1,20 @@
+from typing import Optional
+
 import numpy as np
 from matplotlib import pyplot as plt
 from numpy import sqrt
 from shapely import Polygon, LineString
+from structuralcodes.geometry import SurfaceGeometry, add_reinforcement
+from structuralcodes.materials.concrete import Concrete
+from structuralcodes.materials.reinforcement import Reinforcement
+from structuralcodes.sections import GenericSection
 
 
-class HPShell:
+class HPSlab:
     def __init__(self, B: float, L: float, Hx: float, Hy: float, t: float, dy: float, nt: int):
         """
         Author: Elliot Melcer
-        Represents a hyperbolic paraboloid (hp) shell hp_geometry.
+        Represents a hyperbolic paraboloid (hp) slab.
 
         Parameters
         ----------
@@ -34,11 +40,13 @@ class HPShell:
         self.t = float(t)
         self.dy = float(dy)
         self.nt = nt
+        self.volume = self.volume()
+        self.minimum_infill_volume = self.minimum_infill_volume()
 
     def _a(self):
         """
         Author: Jamila Loutfi
-        returns hp_geometry parameter a
+        returns geometry parameter a
         """
         a = self.L / (2 * sqrt(self.Hx))
         return a
@@ -46,7 +54,7 @@ class HPShell:
     def _b(self) -> float:
         """
         Author: Jamila Loutfi
-        returns hp_geometry parameter b
+        returns geometry parameter b
         """
         b = self.B / (2 * sqrt(self.Hy))
         return b
@@ -200,7 +208,7 @@ class HPShell:
 
     def tendons(self) -> list[tuple[tuple[float, float, float], tuple[float, float, float]]]:
         """
-        Author: ???
+        Author: Elliot Melcer
         Returns tendons as a list of tuples containing the start and end coordinates as tuples
         """
         gt_x_start, gt_x_end = self.gt_x()
@@ -233,7 +241,7 @@ class HPShell:
         coords = []
         for (x0, y0, z0), (x1, y1, z1) in tendon_list:
 
-            t = (x - x0) / (x1 - x0)  # linear interpolation parameter
+            t = (x*self.L - x0) / (x1 - x0)  # linear interpolation parameter
 
             y = y0 + t * (y1 - y0)
             z = z0 + t * (z1 - z0)
@@ -276,11 +284,11 @@ class HPShell:
         # Build LineString
         return LineString(zip(ys, zs))
 
-    def polygon_section(self, x: float, n: int) -> Polygon:
+    def polygon_section_at(self, x: float, n: int) -> Polygon:
         """
         Author: Elliot Melcer
-        Returns a shapely Polygon representing the cross-section at a given x
-        (measured from center). The polygon thickness t is applied perpendicular
+        Returns a shapely Polygon representing the cross-section at a given Factor x ∈ [-0,5 ; 0.5]
+        (0.00 at middle of span). The polygon thickness t is applied perpendicular
         to the mid-surface. nt points are generated on the bottom and top edges.
         """
         # Compute local half-span in y for this x
@@ -294,7 +302,7 @@ class HPShell:
         ys = [(-y_max + 2 * y_max * i / (n - 1)) for i in range(n)]
 
         # Mid-surface z-values
-        zs_mid = [self._z(x, y) for y in ys]
+        zs_mid = [self._z(x*self.L, y) for y in ys]
 
         # Normal directions in 2D (y,z) plane
         normals = []
@@ -321,85 +329,80 @@ class HPShell:
         return Polygon(poly_points)
 
 
-#    def reinforcement_B500(self, x: float, nt: int = 5) -> list[tuple[float, float]]:
+    def volume(self):
+        """
+        Author: Jamila Loutfi
+        Calculates the concrete volume of an hp shell
+        Übernommen von Pauls Skript "volumen.gh"
+        """
+        y1 = self.B / 2
+        y2 = -self.B / 2
+
+        b1 = (8 * self.Hy * y1 * np.sqrt(64 * self.Hy ** 2 * y1 * y1 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
+            8 * self.Hy * y1 / (self.B ** 2))) / (16 * self.Hy)
+        b2 = (8 * self.Hy * y2 * np.sqrt(64 * self.Hy ** 2 * y2 ** 2 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
+            8 * self.Hy * y2 / (self.B ** 2))) / (16 * self.Hy)
+
+        b = b1 - b2
+
+        x1 = self.L / 2
+        x2 = -self.L / 2
+
+        l1 = (8 * self.Hx * x1 * np.sqrt(64 * self.Hx ** 2 * x1 * x1 / (self.L ** 4) + 1) + self.L **2 * np.asinh(
+            8 * self.Hx * x1 / (self.L ** 2))) / (16 * self.Hx)
+        l2 = (8 * self.Hx * x2 * np.sqrt(64 * self.Hx ** 2 * x2 * x2 / (self.L ** 4) + 1) + self.L ** 2 * np.asinh(
+            8 * self.Hx * x2 / (self.L ** 2))) / (16 * self.Hx)
+
+        l = l1 - l2
+
+        volume = l * b * self.t
+        # volumen = 1
+        return volume
+
+
+    def minimum_infill_volume(self):
+        """
+        Author: Jamila Loutfi
+        Calculates the minimum infill volume to flatten out the top of an hp-shell
+        """
+        mid_surface_volume = abs(self.B * self.L * (-2 / 3 * self.Hy - 1 / 3 * self.Hx))
+
+        min_infill_volume = mid_surface_volume - self.volume / 2
+
+        return min_infill_volume
+
+    def section_at(self, _x: float, conc: Concrete, reinforcement: Reinforcement, reinf_area: float,
+                     name: Optional[str] = None) -> GenericSection:
         """
         Author: Elliot Melcer
-        Returns a list of (y, z) points for a generic reinforcement layout of 5 bars along the shell
+        Returns the section from a hp-shell at _x * L with given material properties and reinforcement area
+
+        Note:
+            Reinforcement Area in mm²
+            _x ∈ [-0.5 ; 0.5] with 0.00 at middle of span
         """
-        y_max = self.B / 4  # half span for reinforcement
+        # Concrete Geometry
+        hp_geometry = SurfaceGeometry(
+            poly=self.polygon_section_at(x=_x, n=100), material=conc
+        )
 
-        ys = [(-y_max + 2 * y_max * i / (nt - 1)) for i in range(nt)]
-        zs = [self._z(x, y) for y in ys]
+        # Reinforcement Geometry
+        reinforcement_points = self.tendon_coords_at_x(x=_x)
+        d = np.sqrt(4 * reinf_area / np.pi)
 
-        return list(zip(ys, zs))
+        # Add Reinforcement to Concrete Geometry
+        for pt in reinforcement_points:
+            hp_geometry = add_reinforcement(
+                hp_geometry,
+                pt,  # reinforcement points
+                d,  # diameter [mm]
+                reinforcement  # reinforcement material
+            )
 
-#    def plot_section(self, x: float, n: int = 50, ax=None, title: str = None):
-        """
-        Author: Elliot Melcer
-        Plots both the midline and the polygon section at a given x.
+        if name is None:
+            hp_section = GenericSection(hp_geometry)
+        else:
+            hp_section = GenericSection(hp_geometry, name=name)
 
-        Parameters
-        ----------
-        x : float
-            Longitudinal coordinate (centered at x = 0)
-        n : int
-            Number of points along the polyline/polygon
-        ax : matplotlib axis, optional
-            Optional axis to draw on
-        title : str, optional
-            Plot title
-        """
-        # Generate midline and polygon
-        midline = self.midline(x, n)
-        section = self.polygon_section(x, n)
+        return hp_section
 
-        # Create axis if not provided
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(7, 5))
-
-        # Plot polygon: dark grey outline, grey fill
-        xs, zs = section.exterior.xy
-        ax.fill(xs, zs, facecolor="lightgrey", edgecolor="dimgray", linewidth=1.5, zorder=1)
-
-        # Plot midline: black dashed line
-        xs, zs = midline.xy
-        ax.plot(xs, zs, linestyle="--", color="black", linewidth=1.8, zorder=2)
-
-        # Labels and styling
-        ax.set_aspect("equal", adjustable="box")
-        ax.set_xlabel("y (mm)")
-        ax.set_ylabel("z (mm)")
-        if title:
-            ax.set_title(title)
-        ax.grid(True, linestyle="--", linewidth=0.5)
-
-        return ax
-
-
-def Volumen(self):
-    """
-    Übernommen von Pauls Skript "volumen.gh"
-    """
-    y1 = self.B / 2
-    y2 = -self.B / 2
-
-    b1 = (8 * self.Hy * y1 * np.sqrt(64 * self.Hy ** 2 * y1 * y1 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
-        8 * self.Hy * y1 / (self.B ** 2))) / (16 * self.Hy)
-    b2 = (8 * self.Hy * y2 * np.sqrt(64 * self.Hy ** 2 * y2 ** 2 / (self.B ** 4) + 1) + self.B ** 2 * np.asinh(
-        8 * self.Hy * y2 / (self.B ** 2))) / (16 * self.Hy)
-
-    b = b1 - b2
-
-    x1 = self.L / 2
-    x2 = -self.L / 2
-
-    l1 = (8 * self.Hx * x1 * np.sqrt(64 * self.Hx ** 2 * x1 * x1 / (self.L ** 4) + 1) + self.L **2 * np.asinh(
-        8 * self.Hx * x1 / (self.L ** 2))) / (16 * self.Hx)
-    l2 = (8 * self.Hx * x2 * np.sqrt(64 * self.Hx ** 2 * x2 * x2 / (self.L ** 4) + 1) + self.L ** 2 * np.asinh(
-        8 * self.Hx * x2 / (self.L ** 2))) / (16 * self.Hx)
-
-    l = l1 - l2
-
-    volumen = l * b * self.t
-    # volumen = 1
-    return volumen

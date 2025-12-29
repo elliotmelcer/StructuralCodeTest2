@@ -10,6 +10,17 @@ from core.visualization_core.visualization import plot_cross_section, plot_const
 This file is used for verification of the cracking moment method. 
 
 The sections used for verification are from chapter "C.1. Vergleich der Riss- und Bruchmomente" in Loutfi (2023)
+
+passed 29.12.2025
+
+Output:
+
+Section     Mu [kNm]
+1               53.79
+2 (C50/60)     212.51
+2 (C80/90)     240.86
+3              251.38
+4              490.12
 """
 
 # Section 1:

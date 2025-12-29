@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 from structuralcodes.core._section_results import MomentCurvatureResults
 from structuralcodes.geometry import  CompoundGeometry, SurfaceGeometry
@@ -7,6 +5,9 @@ from structuralcodes.materials.concrete import Concrete, create_concrete
 from structuralcodes.materials.constitutive_laws import Sargin, UserDefined
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
+
+from core.analysis_core.material_methods import sargin_elastic_law, get_cube
+
 
 def calculate_cracking_moment_sls(section: GenericSection, n: float = 0.0) -> dict:
     """
@@ -290,34 +291,6 @@ def get_strain_at_point(strain_profile, y, z) -> float:
     eps_0, chi_y, chi_z = strain_profile
     return eps_0 + chi_y * z + chi_z * y
 
-def get_cube(cylinder_strength) -> float:
-    """
-    Author: Elliot Melcer
-    Return cube strength (MPa) from EN 206 concrete class table.
-    """
-    table = {
-        12.: 15.,
-        16.: 20.,
-        20.: 25.,
-        25.: 30.,
-        30.: 37.,
-        35.: 45.,
-        40.: 50.,
-        45.: 55.,
-        50.: 60.,
-        55.: 67.,
-        60.: 75.,
-        70: 85,
-        80: 95,
-        90: 105,
-        100: 115,
-    }
-
-    if cylinder_strength not in table:
-        raise ValueError("Cylinder strength not in EN 206 table")
-
-    return table[cylinder_strength]
-
 def sls_section(section_uls: GenericSection, concrete_tension: bool) -> GenericSection:
     """
     Author: Elliot Melcer
@@ -332,7 +305,7 @@ def sls_section(section_uls: GenericSection, concrete_tension: bool) -> GenericS
     f_cube = get_cube(f_ck)
 
     # If Concrete should be able to take tension forces, use custom constitutive law (linear in tension and non-linear in compression)
-    if concrete_tension == True:
+    if concrete_tension:
         concrete_sls = create_concrete(fck=f_ck, constitutive_law=sargin_elastic_law(conc), name = f"C{f_ck}/{f_cube} SLS")
     # If Concrete should not be able to take tension forces, use sargin (nonlinear) constitutive law
     else:
@@ -402,64 +375,3 @@ def get_number_of_reinforcements(section: GenericSection) -> int:
     geom = section.geometry
     n = len(geom.point_geometries)
     return n
-
-def sargin_elastic_law(concrete: Concrete, n_c: int = 80, n_t: int = 20) -> UserDefined:
-    """
-    Author: Elliot Melcer
-    Creates a Non-Linear Constitutive Law with Linear Branch in Tension and Sargin Branch Under Compression
-    - Compression: Sargin (eps_cu1 → eps_c1)
-    - Tension: linear elastic (0 → eps_ctm)
-    """
-
-    # -------------------------------
-    # Read parameters
-    # -------------------------------
-    fcm = concrete.fcm
-    Ecm = concrete.Ecm
-    fctm = concrete.fctm
-
-    eps_c1 = -abs(concrete.eps_c1)
-    eps_cu1 = -abs(concrete.eps_cu1)
-    k = concrete.k_sargin
-
-    eps_ctm = fctm / Ecm
-
-    # -------------------------------
-    # Sargin compression
-    # -------------------------------
-    sargin = Sargin(
-        fc=fcm,
-        eps_c1=eps_c1,
-        eps_cu1=eps_cu1,
-        k=k,
-    )
-
-    # ⚠ exclude zero explicitly
-    eps_c = np.linspace(eps_cu1, 0.00, n_c, endpoint=True)
-    eps_c = eps_c[eps_c < 0.0]
-    sig_c = sargin.get_stress(eps_c)
-
-    # -------------------------------
-    # Elastic tension
-    # -------------------------------
-    eps_t = np.linspace(0.0, eps_ctm, n_t, endpoint=True)
-    sig_t = Ecm * eps_t
-
-    # -------------------------------
-    # Merge safely
-    # -------------------------------
-    eps = np.concatenate((eps_c, eps_t))
-    sig = np.concatenate((sig_c, sig_t))
-
-    # -------------------------------
-    # Final safety check (important)
-    # -------------------------------
-    eps, unique_idx = np.unique(eps, return_index=True)
-    sig = sig[unique_idx]
-
-    return UserDefined(
-        x=eps,
-        y=sig,
-        name="SarginElastic",
-        flag=0,
-    )
