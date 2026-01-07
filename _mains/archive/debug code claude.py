@@ -14,7 +14,7 @@ from core.visualization_core.visualization import (
     plot_cross_section
 )
 
-from slabs.hp_slab.model.hp_slab import HPSlab
+from slab_construction.slabs import HPSlab
 
 # Import improved M-K plot for CFRP
 import numpy as np

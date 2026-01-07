@@ -48,12 +48,6 @@ def calculate_cracking_moment_sls(section: GenericSection, n: float = 0.0) -> di
     fctm = conc.fctm
     eps_ctm = fctm / Ecm  # Cracking strain
 
-    # --- Geometric Section Properties ---
-    gross_props = sls_sec.gross_properties
-
-    # Centroid z-coordinate
-    cz = gross_props.cz
-
     # Get section extents
     _, _, zmin, zmax = sls_sec.geometry.calculate_extents()
 

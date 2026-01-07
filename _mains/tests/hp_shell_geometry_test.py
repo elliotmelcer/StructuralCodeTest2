@@ -6,7 +6,7 @@ from core.analysis_core import section_methods
 from core.analysis_core.section_methods import sls_section, get_concrete
 from core.visualization_core.visualization import plot_moment_curvature, plot_constitutive_law_concrete, \
     plot_constitutive_law_reinforcement, table_moment_curvature, plot_cross_section
-from slabs.hp_slab.model.hp_slab import HPSlab
+from slab_construction.slabs import HPSlab
 from _mains.testing_files.testing_materials import solidian_Q142_pre_50, concrete_c50_uls
 
 # hp_geometry stuff

@@ -6,13 +6,13 @@ class Slab(ABC):
     @abstractmethod
     def self_load(self) -> float:
         """
-        Returns the self-weight load of the slab.
+        Returns the self-weight load of the slab [kN/m²]
         """
         pass
 
     @abstractmethod
     def infill_load(self) -> float:
         """
-        Returns the load due to infill or finishes on the slab.
+        Returns the load due to infill on the slab [kN/m²]
         """
         pass

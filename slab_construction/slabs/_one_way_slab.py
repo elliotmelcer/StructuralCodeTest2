@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
-from structuralcodes.materials.concrete import Concrete
-from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 
-from slabs.slab import Slab
+from slab_construction.slabs.slab import Slab
 
 
 class OneWaySlab(Slab, ABC):

@@ -1,8 +1,6 @@
-from abc import ABC
 from typing import Optional
 
 import numpy as np
-from matplotlib import pyplot as plt
 from numpy import sqrt
 from shapely import Polygon, LineString
 from structuralcodes.geometry import SurfaceGeometry, add_reinforcement
@@ -11,7 +9,7 @@ from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 
 from core.unit_core import mm2_to_m2, mm3_to_m3
-from slabs.one_way_slab import OneWaySlab
+from slab_construction.slabs._one_way_slab import OneWaySlab
 
 
 class HPSlab(OneWaySlab):
@@ -439,22 +437,23 @@ class HPSlab(OneWaySlab):
     def self_load(self) -> float:
         """
         Author: Elliot Melcer
-        Returns the self-weight load of the concrete shell in [kN/m2] (self-weight of CRFP-reinforcement is negligible)
+        Returns the self-weight load of the concrete shell in [kN/m²]
+        Note: self-weight of CRFP-reinforcement is negligible
         """
         concrete_volume_m3 = mm3_to_m3(self.volume())           # [m³]
         gamma_c = self.concrete.density * 10 / 1000             # [kN/m³]
         net_area = mm2_to_m2(self.B * self.L)                   # [m²]
 
-        return concrete_volume_m3 * gamma_c / net_area          # [kN/m2]
+        return concrete_volume_m3 * gamma_c / net_area          # [kN/m²]
 
     def infill_load(self) -> float:
         """
         Author: Elliot Melcer
-        Returns the load due to minimum infill on the slab in [kN/m2]
+        Returns the load due to minimum infill on the slab in [kN/m²]
         """
         infill_volume_m3 = mm3_to_m3(self.minimum_infill_volume())  # [m³]
         gamma_c = self.concrete.density * 10 / 1000                 # [kN/m³]
         net_area = mm2_to_m2(self.B * self.L)                       # [m²]
 
-        return infill_volume_m3 * gamma_c / net_area                # [kN/m2]
+        return infill_volume_m3 * gamma_c / net_area                # [kN/m²]
 

@@ -7,7 +7,7 @@ from structuralcodes.materials.concrete import Concrete
 from structuralcodes.materials.reinforcement import Reinforcement
 from structuralcodes.sections import GenericSection
 from core.visualization_core.visualization import plot_cross_section
-from slabs.hp_slab.model.hp_slab import HPSlab
+from slab_construction.slabs import HPSlab
 from _mains.testing_files.testing_materials import concrete_c50_uls, solidian_Q142_pre_50, \
     concrete_c80_uls, solidian_Q142, solidian_Q95_pre_50, solidian_Q95_pre_20, solidian_Q142_pre_60, concrete_c55_uls
 
