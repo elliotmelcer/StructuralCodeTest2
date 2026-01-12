@@ -12,6 +12,11 @@ class OneWaySlab(Slab, ABC):
     def L(self) -> float:
         pass
 
+    @property
+    @abstractmethod
+    def B(self) -> float:
+        pass
+
     @abstractmethod
     def section_at(self, _x: float) -> GenericSection:
         pass

@@ -16,3 +16,4 @@ class Slab(ABC):
         Returns the load due to infill on the slab [kN/m²]
         """
         pass
+

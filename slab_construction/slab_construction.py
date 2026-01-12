@@ -14,6 +14,22 @@ class FloorLayer:
     material: Material
     thickness: float
 
+class FloorMaterial(Material):
+    """
+    Author: Elliot Melcer
+    Instantiable Simple Material for floor layers.
+    """
+    def __init__(self, density: float, name: str | None = "FloorMaterial") -> None:
+        super().__init__(density=density, name=name)
+
+    @property
+    def density(self) -> float:
+        return self._density
+
+    @property
+    def name(self) -> str:
+        return self._name
+
 class Floor:
     """
     Author: Elliot Melcer

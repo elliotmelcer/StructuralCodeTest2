@@ -1,5 +1,8 @@
 import numpy as np
 
+from slab_construction.slab_construction import SlabConstruction
+
+
 class Loads:
 
     """
@@ -9,7 +12,7 @@ class Loads:
 
     def __init__(
         self,
-        slab_construction,
+        slab_construction: SlabConstruction,
         live_loads,
         psi_0_values,
         psi_1_values,

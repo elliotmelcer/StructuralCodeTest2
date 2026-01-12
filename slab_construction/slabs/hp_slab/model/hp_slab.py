@@ -49,7 +49,7 @@ class HPSlab(OneWaySlab):
             Number of tendons per tendon group, total number of tendons: 2 * nt
         """
         self.name = name
-        self.B = float(B)
+        self._B = float(B)
         self._L = float(L)
         self.Hx = float(Hx)
         self.Hy = float(Hy)
@@ -65,6 +65,10 @@ class HPSlab(OneWaySlab):
     @property
     def L(self) -> float:
         return self._L
+
+    @property
+    def B(self) -> float:
+        return self._B
 
     def _a(self):
         """
