@@ -10,6 +10,7 @@ class FloorLayer:
     """
     Author: Elliot Melcer
     Basic Class to model floor layers
+    Note: Thickness in [mm] to keep in line with all other dimensions in structuralcodes
     """
     material: Material
     thickness: float
@@ -22,21 +23,13 @@ class FloorMaterial(Material):
     def __init__(self, density: float, name: str | None = "FloorMaterial") -> None:
         super().__init__(density=density, name=name)
 
-    @property
-    def density(self) -> float:
-        return self._density
-
-    @property
-    def name(self) -> str:
-        return self._name
-
 class Floor:
     """
     Author: Elliot Melcer
     Class to model a floor construction made up of floor layers
     """
-    def __init__(self) -> None:
-        self.layers: list[FloorLayer] = []
+    def __init__(self, layers: list[FloorLayer] | None = None) -> None:
+        self.layers: list[FloorLayer] = list(layers) if layers is not None else []
 
     def add_layer(self, material: Material, thickness: float) -> None:
         """

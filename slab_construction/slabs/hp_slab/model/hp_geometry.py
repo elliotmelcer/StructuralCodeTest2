@@ -42,7 +42,6 @@ class HPGeometry:
         self.t = float(t)
         self.dy = float(dy)
         self.nt = nt
-        self.volume = self.volume()
 
     def _a(self):
         """

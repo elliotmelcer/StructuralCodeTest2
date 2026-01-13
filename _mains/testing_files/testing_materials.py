@@ -4,15 +4,18 @@ This File serves to provide Materials for Testing Purposes
 """
 
 from structuralcodes import set_design_code
+from structuralcodes.core.base import Material
 from structuralcodes.materials.concrete import create_concrete
 from structuralcodes.materials.constitutive_laws import Elastic
 from structuralcodes.materials.reinforcement import create_reinforcement
+
+from slab_construction.slab_construction import FloorMaterial
 
 set_design_code('ec2_2004')
 
 # --- Material Definitions ---
 
-# -- Properties --
+# -- Concretes --
 
 
 # - Definitions -
@@ -160,3 +163,9 @@ solidian_Q142_pre_60 = create_reinforcement(
     gamma_s = 1.3,
     name = "solidian GRID Q142/142-CCE-25 prestressed 60%"
 )
+
+# -- Floor Materials --
+
+infill = FloorMaterial(density = 1000)
+sound_insulation = FloorMaterial(density = 24)
+screed = FloorMaterial(density = 2000)
