@@ -30,28 +30,32 @@ class HPShell:
         self.reinf_area = reinf_area
         self.name = name
 
-    def section_at(self, _x: float, name: Optional[str] = None) -> GenericSection:
+    def section_at(self, x: float, name: Optional[str] = None) -> GenericSection:
         """
         Author: Elliot Melcer
-        Returns the section from a hp-shell at _x * L with given material properties and reinforcement area
+        Returns the section from a hp-shell at x * L with given material properties and reinforcement area
 
         Note:
             Reinforcement Area in mm²
-            _x ∈ [-0.5 ; 0.5] with 0.00 at middle of span
+            x ∈ [0 ; 1] with 0.0 at first support, 1.0 at second support
         """
         # --- Input validation ---
-        if not -0.5 <= _x <= 0.5:
+        if not 0.0 <= x <= 1.0:
             raise ValueError(
-                f"_x must be between -0.5 and 0.5 (inclusive). Received {_x}."
+                f"x must be between 0.0 and 1.0 (inclusive). Received {x}."
             )
+
+        # Coordinate Transformation
+        # External API uses x ∈ [0 ; 1], but internal geometry calculations use x ∈ [-0.5, 0.5]
+        x_internal = x - 0.5
 
         # Concrete Geometry
         hp_geometry = SurfaceGeometry(
-            poly=self.hp_geometry.polygon_section_at(x=_x, n=100), material=self.concrete
+            poly=self.hp_geometry.polygon_section_at(x=x_internal, n=100), material=self.concrete
         )
 
         # Reinforcement Geometry
-        reinforcement_points = self.hp_geometry.tendon_coords_at_x(x=_x)
+        reinforcement_points = self.hp_geometry.tendon_coords_at_x(x=x_internal)
         d = np.sqrt(4 * self.reinf_area / np.pi)
 
         # Add Reinforcement to Concrete Geometry

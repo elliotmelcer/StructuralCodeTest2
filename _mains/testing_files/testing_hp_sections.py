@@ -20,7 +20,7 @@ HP-Shells for Testing. Naming convention after:
 """
 
 """UNUSED"""
-# def make_section(hp: HPSlab, conc: Concrete, reinforcement: Reinforcement, reinf_area: float, _x: float, name: Optional[str] = None) -> GenericSection:
+# def make_section(hp: HPSlab, conc: Concrete, reinforcement: Reinforcement, reinf_area: float, x: float, name: Optional[str] = None) -> GenericSection:
 #     """
 #     Author: Elliot Melcer
 #     Returns a section from a hp-shell, material properties, reinforcement area and location in shell
@@ -31,11 +31,11 @@ HP-Shells for Testing. Naming convention after:
 #     """
 #     # Concrete Geometry
 #     hp_geometry = SurfaceGeometry(
-#         poly=hp.polygon_section_at(x=_x, n=100), material=conc
+#         poly=hp.polygon_section_at(x=x, n=100), material=conc
 #     )
 #
 #     # Reinforcement Geometry
-#     reinforcement_points = hp.tendon_coords_at_x(x=_x)
+#     reinforcement_points = hp.tendon_coords_at_x(x=x)
 #     d = np.sqrt(4 * reinf_area / np.pi)
 #
 #     # Add Reinforcement to Concrete Geometry

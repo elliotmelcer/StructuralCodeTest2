@@ -8,6 +8,8 @@ class Loads:
     """
     Author: Elliot Melcer
     Class for instantiating a load model according to Eurocode 0
+
+    Note: only uniformly distributed loads over ALL spans
     """
 
     def __init__(
