@@ -317,6 +317,28 @@ def sls_section(section_uls: GenericSection, concrete_tension: bool) -> GenericS
 
     return new_sls_section
 
+def flipped_section(section: GenericSection) -> GenericSection:
+    """
+    Author: Elliot Melcer
+    Returns the flipped section, to be used when calculating the bending strength at a support
+    :param section:
+    :return:
+    """
+    geometry = section.geometry
+
+    gross_props = section.gross_properties
+
+    centroid = (gross_props.cy, gross_props.cz)
+
+    flipped_support_section_geometry = geometry.rotate(
+        angle=180,
+        point=centroid,
+        use_radians=False)
+
+    rotated_section = GenericSection(flipped_support_section_geometry, name = f"{section.name} (Support)")
+
+    return rotated_section
+
 def get_concrete(section: GenericSection) -> Concrete:
     """
     Author: Elliot Melcer

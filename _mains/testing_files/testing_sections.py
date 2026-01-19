@@ -5,12 +5,32 @@ from structuralcodes.sections import GenericSection
 
 from _mains.testing_files.testing_materials import concrete_c40_uls, reinforcement_B500
 
+"""
+Author: Elliot Melcer
+
+Testing T-Section
+
+             b
+    |<--------------->|
+     _________________    _ _
+    |                 |    ^
+    |                 |    | d
+    '---,         ,---'   -X-
+     b1 |         | b1     |
+    |<->|         |<->|    |
+        |         |        | d1   
+cover ^ | °  °  ° |        |      
+      v |_________|       _v_     
+            b0
+        |<------->|
+"""
+
+
 b  = 300      #mm
 b1 = 50
 b0 = 200
 d = 200
 d1 = 200
-d0 = 400
 cover = 50
 
 polygon = Polygon(

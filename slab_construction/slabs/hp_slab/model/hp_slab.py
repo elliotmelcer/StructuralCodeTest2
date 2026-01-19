@@ -2,7 +2,7 @@ from typing import Optional
 from structuralcodes.sections import GenericSection
 from core.unit_core import mm2_to_m2, mm3_to_m3
 from slab_construction.slab_construction import FloorMaterial
-from slab_construction.slabs._one_way_slab import OneWaySlab
+from slab_construction.slabs.one_way_slab import OneWaySlab
 from slab_construction.slabs.hp_slab.model.hp_shell import HPShell
 
 
