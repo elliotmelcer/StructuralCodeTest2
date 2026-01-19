@@ -256,8 +256,6 @@ def calculate_bending_strength_uls(section: GenericSection, n: float = 0.0) -> d
         'strain_profile': strain_profile,
     }
 
-    return section.section_calculator.calculate_bending_strength().m_y
-
 def calculate_moment_curvature_sls(section: GenericSection, n: float = 0.0) -> MomentCurvatureResults:
     """
     Author: Elliot Melcer

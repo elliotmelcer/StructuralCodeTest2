@@ -4,12 +4,10 @@ from _mains.testing_files.testing_slab_construction import test_slab_constructio
 from core.analysis_core.loads import Loads
 from slab_construction.slab_construction import SlabConstruction
 
-slab_construction = SlabConstruction(hp_c1_4, test_floor)
-
 live_loads = [3.0] #kN/m²
 
 psi_0_values = [1.0]
 psi_1_values = [1.0]
 psi_2_values = [0.3]
 
-test_loads = Loads(test_slab_construction, live_loads, psi_0_values, psi_1_values, psi_2_values)
+test_loads = Loads(live_loads, psi_0_values, psi_1_values, psi_2_values)

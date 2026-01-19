@@ -39,11 +39,11 @@ class InternalForces:
         combination = combination.strip().upper()
 
         if combination == "FUNDAMENTAL":
-            w = loads.fundamental_combination()  # kN/m2
+            w = loads.fundamental_combination(slab_construction)  # kN/m2
         elif combination == "FREQUENT":
-            w = loads.frequent_combination()  # kN/m2
+            w = loads.frequent_combination(slab_construction)  # kN/m2
         elif combination in ("QUASI-PERMANENT", "QUASI_PERMANENT", "QUASI PERMANENT"):
-            w = loads.quasi_permanent_combination()  # kN/m2
+            w = loads.quasi_permanent_combination(slab_construction)  # kN/m2
         else:
             raise ValueError(
                 "Invalid combination. Must be one of: 'FUNDAMENTAL', 'FREQUENT', 'QUASI-PERMANENT'."
