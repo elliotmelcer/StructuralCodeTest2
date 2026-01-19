@@ -1,8 +1,4 @@
-from _mains.testing_files.testing_floor import test_floor
-from _mains.testing_files.testing_hp_sections import hp_c1_4
-from _mains.testing_files.testing_slab_construction import test_slab_construction
 from core.analysis_core.loads import Loads
-from slab_construction.slab_construction import SlabConstruction
 
 live_loads = [3.0] #kN/m²
 
